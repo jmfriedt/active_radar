@@ -1,4 +1,6 @@
-pkg load signal
+if (exist ("OCTAVE_VERSION", "builtin") > 0)
+  pkg load signal     % running on GNU/Octave, not Matlab, so load signal processing toolbox
+end
 load 700_750_house_final4_with_protection.mat.gz
 
 df=1;     % frequency sweep step (MHz)
