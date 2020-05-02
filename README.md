@@ -19,10 +19,11 @@ is fitted with two USB 3 ports, the whole setup was ported to this platform.
 
 In order to setup the system, Buildroot is downloaded at https://github.com/buildroot/buildroot
 since it supports the full 64-bit ARM processor of the RPi4. Additional packages needed are
-provided through a BR2_EXTERNAL mechanism using the additional files found at
-https://github.com/oscimp/PlutoSDR. After git cloning the latter repository, in a shell
-``source sourceme.ggm`` will load the BR2_EXTERNAL additional packages. Then go to the
-buildroot directory, copy the provided raspberrypi4_64_defconfig into the Buildroot configs
+provided through a BR2_EXTERNAL mechanism using the additional files found in the ``for_next``
+branch of https://github.com/oscimp/PlutoSDR (i.e. at
+https://github.com/oscimp/PlutoSDR/tree/for_next). After git cloning the latter repository, 
+in a shell ``source sourceme.ggm`` will load the BR2_EXTERNAL additional packages. Then go to 
+the buildroot directory, copy the provided raspberrypi4_64_defconfig into the Buildroot configs
 directory, and ``make raspberrypi4_64_defconfig`` followed by ``make``. After a very long 
 compilation, the ``output/images/sdcard.img`` is written (``dd``) to a micro-SD card for
 running on the RPi4.
