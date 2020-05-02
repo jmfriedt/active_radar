@@ -35,14 +35,15 @@ class t(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = int(2.7e6)
-        self.f = f = int(650e6)
+        self.samp_rate = samp_rate = int(2.2e6)
+        self.f = f = int(700e6)
         self.N = N = 140000
+        self.plutopow = plutopow = 30.0
 
         ##################################################
         # Blocks
         ##################################################
-        self.zeromq_pub_sink_0 = zeromq.pub_sink(gr.sizeof_gr_complex, N, 'tcp://127.0.0.1:5555', 100, False, -1)
+        self.zeromq_pub_sink_0 = zeromq.pub_sink(gr.sizeof_gr_complex, N, 'tcp://192.168.0.165:5555', 100, False, -1)
         self.uhd_usrp_source_0 = uhd.usrp_source(
             ",".join(("", "")),
             uhd.stream_args(
@@ -59,7 +60,7 @@ class t(gr.top_block):
         self.uhd_usrp_source_0.set_antenna('RX2', 1)
         self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_time_unknown_pps(uhd.time_spec())
-        self.iio_pluto_sink_0 = iio.pluto_sink('', f, samp_rate, 20000000, 32768, False, 30.0, '', True)
+        self.iio_pluto_sink_0 = iio.pluto_sink('', f, samp_rate, 20000000, 32768, False, plutopow, '', True)
         self.dc_blocker_xx_0 = filter.dc_blocker_ff(32, True)
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, N)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(3.1415)
@@ -92,7 +93,7 @@ class t(gr.top_block):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.iio_pluto_sink_0.set_params(self.f, self.samp_rate, 20000000, 30.0, '', True)
+        self.iio_pluto_sink_0.set_params(self.f, self.samp_rate, 20000000, plutopow, '', True)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
 
     def get_f(self):
@@ -100,7 +101,7 @@ class t(gr.top_block):
 
     def set_f(self, f):
         self.f = f
-        # self.iio_pluto_sink_0.set_params(self.f, self.samp_rate, 20000000, 30.0, '', True)
+        # self.iio_pluto_sink_0.set_params(self.f, self.samp_rate, 20000000, 0.0, '', True)
         self.iio_pluto_sink_0.set_single_param("out_altvoltage1_TX_LO_frequency",self.f)
         self.uhd_usrp_source_0.set_center_freq(self.f, 0)
         self.uhd_usrp_source_0.set_center_freq(self.f, 1)
@@ -113,32 +114,34 @@ class t(gr.top_block):
         self.N = N
 
     def jmf_server(self):
-        sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('localhost', 5556))
-        print("Server running")
-        sock.listen(1)
-        conn, addr = sock.accept()
-        with conn:
-            print('connected from ',addr)
-            while True:
-                 data=conn.recv(1)
-                 print(data)
-                 if '+' in str(data):
-                    self.f=self.f+1000000
-                 if '-' in str(data):
-                    self.f=self.f-1000000
-                 if '0' in str(data):
-                    self.f=int(650e6)
-                 if '.' in str(data):
-                    self.f=self.f
-                    print('Reprogram')
-                 if 'q' in str(data):
-                    print('Bye')
-                    sock.shutdown(socket.SHUT_RDWR)
-                    sock.close()
-                 print(self.f)
-                 self.set_f(self.f)
+        while True:
+            sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(('192.168.0.165', 5556))
+            print("Waiting for connection")
+            sock.listen(1)
+            conn, addr = sock.accept()
+            with conn:
+                print('connected from ',addr)
+                while True:
+                    data=conn.recv(1)
+                    print(data)
+                    if '+' in str(data):
+                        self.f=self.f+1000000
+                    if '-' in str(data):
+                        self.f=self.f-1000000
+                    if '0' in str(data):
+                        self.f=int(700e6)
+                    if '.' in str(data):
+                        self.f=self.f
+                        print('Reprogram')
+                    if 'q' in str(data):
+                        print('Bye')
+                        sock.shutdown(socket.SHUT_RDWR)
+                        sock.close()
+                        break
+                    print(self.f)
+                    self.set_f(self.f)
 
 def main(top_block_cls=t, options=None):
     tb = top_block_cls()
